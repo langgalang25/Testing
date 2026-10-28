@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSW Mensetsu Answer Generator (特定技能面接作成)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        sakura: {
+                            50: '#fff5f7',
+                            100: '#ffe3ec',
+                            200: '#fccada',
+                            500: '#f43f5e',
+                            600: '#e11d48',
+                        },
+                        indigoNavy: {
+                            800: '#1e293b',
+                            900: '#0f172a',
+                            950: '#0b0f19'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+            /* Mencegah scroll horizontal pada HP */
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .japanese-text {
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        /* Style scroll khusus untuk tab opsi di HP agar mulus */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
+
+    <!-- Header Navigation (Mobile Optimized) -->
+    <header class="bg-indigoNavy-900 text-white shadow-md sticky top-0 z-50 border-b border-rose-900/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-rose-500 flex items-center justify-center text-white shadow-lg shadow-rose-500/30 font-bold text-lg sm:text-xl flex-shrink-0">
+                    🌸
+                </div>
+                <div>
+                    <h1 class="font-bold text-sm sm:text-lg leading-tight flex items-center gap-1.5">
+                        SSW Mensetsu AI <span class="text-[10px] sm:text-xs bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded-full border border-rose-500/30">Gemini Powered</span>
+                    </h1>
+                    <p class="text-[10px] sm:text-xs text-slate-400">Draft Jawaban Wawancara Tokutei Ginou</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <div id="apiStatusBadge" class="hidden md:flex items-center space-x-1 text-xs bg-emerald-950/80 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-full">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>Gemini AI Connected</span>
+                </div>
+                <button id="toggleSavedModal" class="flex items-center space-x-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-2 sm:px-3 sm:py-1.5 rounded-xl border border-slate-700 transition active:scale-95 touch-manipulation">
+                    <i data-lucide="bookmark" class="w-4 h-4 text-rose-400"></i>
+                    <span class="hidden sm:inline">Favorit</span> (<span id="savedCount">0</span>)
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex-grow w-full">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
+            
+            <!-- Left Panel: Form Input & Settings (5 Columns) -->
+            <div class="lg:col-span-5 space-y-4 sm:space-y-6">
+                
+                <!-- Card 1: Pengaturan Pertanyaan -->
+                <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200">
+                    <h2 class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2 mb-3 sm:mb-4 border-b pb-2.5 border-slate-100">
+                        <i data-lucide="help-circle" class="w-4 h-4 sm:w-5 sm:h-5 text-rose-500"></i>
+                        Pilih / Masukkan Pertanyaan
+                    </h2>
+                    
+                    <div class="space-y-3.5">
+                        <div>
+                            <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Preset Pertanyaan Popular Mensetsu</label>
+                            <select id="questionPreset" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-xs sm:text-sm rounded-xl p-3 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition touch-manipulation">
+                                <option value="jikoshoukai">1. 自己紹介 (Jikoshoukai - Perkenalan Diri)</option>
+                                <option value="shibou_douki">2. 志望動機 (Shibou Douki - Alasan Melamar SSW)</option>
+                                <option value="why_japan">3. なぜ日本ですか (Mengapa memilih bekerja di Jepang?)</option>
+                                <option value="chousho_tansho">4. 長所と短所 (Kelebihan & Kekurangan Diri)</option>
+                                <option value="kenkou_kanri">5. 健康管理 (Cara Menjaga Kesehatan & Stres)</option>
+                                <option value="tough_work">6. 大変な時どうしますか (Cara Menyikapi Pekerjaan Berat/Sulit)</option>
+                                <option value="future_goals">7. 将来の目標 (Rencana/Target Setelah 5 Tahun di Jepang)</option>
+                                <option value="custom">✍️ Pertanyaan Custom (Tulis Sendiri)</option>
+                            </select>
+                        </div>
+
+                        <!-- Custom Question Text Area -->
+                        <div id="customQuestionContainer" class="hidden">
+                            <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Pertanyaan Custom (Jepang / Indonesia)</label>
+                            <textarea id="customQuestionInput" rows="2" placeholder="Contoh: Mengapa memilih bekerja di bidang Restoran? / なぜ飲食を選びましたか。" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-xs sm:text-sm rounded-xl p-3 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition touch-manipulation"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Detail Profil Pengguna (Personalisasi) -->
+                <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200">
+                    <h2 class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2 mb-3 sm:mb-4 border-b pb-2.5 border-slate-100">
+                        <i data-lucide="user-check" class="w-4 h-4 sm:w-5 sm:h-5 text-rose-500"></i>
+                        Personalisasi Jawaban
+                    </h2>
+
+                    <div class="space-y-3.5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Bidang Tokutei Ginou</label>
+                                <select id="sswSector" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-xs sm:text-sm rounded-xl p-3 focus:ring-2 focus:ring-rose-500 transition touch-manipulation">
+                                    <option value="Kaigo (介護) / Keperawatan">介護 (Kaigo)</option>
+                                    <option value="Inshokuten (外食) / Restoran & Kuliner">外食 (Restoran)</option>
+                                    <option value="Shokuhin Seizou (食品製造) / Pabrik Makanan">食品製造 (Pabrik)</option>
+                                    <option value="Nōgyō (農業) / Pertanian">農業 (Pertanian)</option>
+                                    <option value="Kensetsu (建設) / Konstruksi">建設 (Konstruksi)</option>
+                                    <option value="Bilu Maintenance (ビルクリーニング) / Pembersihan Gedung">ビルクリーニング (Cleaning)</option>
+                                    <option value="Lainnya / General SSW">Lainnya / Umum</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Target Level Bahasa</label>
+                                <select id="jlptLevel" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-xs sm:text-sm rounded-xl p-3 focus:ring-2 focus:ring-rose-500 transition touch-manipulation">
+                                    <option value="N4">JLPT N4 / JFT-Basic A2</option>
+                                    <option value="N3">JLPT N3 (Menengah)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] sm:text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Kata Kunci / Clue Jawaban (Pengalaman/Alasan)</label>
+                            <input type="text" id="userKeywords" placeholder="Contoh: Suka merawat lansia / Rajin belajar / Pernah magang 1 tahun" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-xs sm:text-sm rounded-xl p-3 focus:ring-2 focus:ring-rose-500 transition touch-manipulation">
+                        </div>
+                    </div>
+
+                    <!-- Generate Button (Touch Optimized) -->
+                    <div class="mt-5 sm:mt-6">
+                        <button id="generateBtn" class="w-full bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-semibold py-3.5 px-4 rounded-xl shadow-lg shadow-rose-600/30 flex items-center justify-center space-x-2 transition transform active:scale-95 touch-manipulation min-h-[48px]">
+                            <i data-lucide="sparkles" class="w-5 h-5"></i>
+                            <span id="generateBtnText" class="text-sm sm:text-base">Buat 5 Jawaban Lengkap via AI</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Info Banner -->
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-xs text-amber-800 flex items-start space-x-2.5">
+                    <i data-lucide="lightbulb" class="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5"></i>
+                    <div>
+                        <span class="font-bold">Tips HP:</span> Geser tab (Opsi 1-5) di sebelah kanan/bawah ke samping untuk berpindah variasi jawaban dengan cepat.
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Panel: Results View & Tabs (7 Columns) -->
+            <div class="lg:col-span-7 space-y-3.5 sm:space-y-4">
+                
+                <!-- Status Header & Control Toolbar -->
+                <div class="bg-white rounded-2xl p-3.5 sm:p-4 shadow-sm border border-slate-200 flex flex-row items-center justify-between gap-2">
+                    <div class="overflow-hidden">
+                        <span class="text-[10px] sm:text-xs font-medium text-slate-400 uppercase tracking-wider">Pertanyaan Terpilih:</span>
+                        <h3 id="currentQuestionTitle" class="text-xs sm:text-base font-bold text-slate-800 truncate">
+                            <span>1. 自己紹介 (Perkenalan Diri)</span>
+                        </h3>
+                    </div>
+
+                    <!-- Regenerate / Refresh Action -->
+                    <button id="refreshBtn" class="flex-shrink-0 flex items-center space-x-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium px-3 py-2.5 rounded-xl transition border border-slate-300 active:scale-95 touch-manipulation">
+                        <i data-lucide="rotate-cw" class="w-3.5 h-3.5 text-rose-600" id="refreshIcon"></i>
+                        <span class="hidden sm:inline">Refresh</span>
+                    </button>
+                </div>
+
+                <!-- Option Tabs (Horizontal Scroll for Mobile) -->
+                <div class="flex space-x-2 overflow-x-auto pb-1 no-scrollbar -mx-1 px-1" id="optionTabs">
+                    <button data-tab="0" class="tab-btn px-3.5 py-2.5 rounded-xl font-medium text-xs whitespace-nowrap flex-shrink-0 transition bg-rose-600 text-white shadow-md shadow-rose-600/20 active:scale-95 touch-manipulation">
+                        Opsi 1: Standard
+                    </button>
+                    <button data-tab="1" class="tab-btn px-3.5 py-2.5 rounded-xl font-medium text-xs whitespace-nowrap flex-shrink-0 transition bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 active:scale-95 touch-manipulation">
+                        Opsi 2: Clue
+                    </button>
+                    <button data-tab="2" class="tab-btn px-3.5 py-2.5 rounded-xl font-medium text-xs whitespace-nowrap flex-shrink-0 transition bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 active:scale-95 touch-manipulation">
+                        Opsi 3: Semangat
+                    </button>
+                    <button data-tab="3" class="tab-btn px-3.5 py-2.5 rounded-xl font-medium text-xs whitespace-nowrap flex-shrink-0 transition bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 active:scale-95 touch-manipulation">
+                        Opsi 4: Kerjasama
+                    </button>
+                    <button data-tab="4" class="tab-btn px-3.5 py-2.5 rounded-xl font-medium text-xs whitespace-nowrap flex-shrink-0 transition bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 active:scale-95 touch-manipulation">
+                        Opsi 5: Terstruktur
+                    </button>
+                </div>
+
+                <!-- Active Answer Content Display Box -->
+                <div class="relative min-h-[420px]">
+                    
+                    <!-- Loading State Overlay -->
+                    <div id="loadingOverlay" class="hidden absolute inset-0 bg-white/95 backdrop-blur-sm z-20 rounded-2xl flex flex-col items-center justify-center space-y-3 border border-slate-200 p-6 text-center">
+                        <div class="w-10 h-10 border-4 border-rose-200 border-t-rose-600 rounded-full animate-spin"></div>
+                        <p class="text-xs sm:text-sm font-semibold text-slate-800 animate-pulse" id="loadingText">Menghubungi Gemini AI untuk meracik 5 variasi jawaban mendalam...</p>
+                        <p class="text-[11px] text-slate-500">Menyusun struktur kalimat N4-N3 yang padat dan persuasif</p>
+                    </div>
+
+                    <!-- Answer Detail Card -->
+                    <div id="answerCard" class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-4 sm:space-y-6">
+                        
+                        <!-- Top Tag line & Action buttons (Large touch targets) -->
+                        <div class="flex items-center justify-between border-b pb-3 border-slate-100 gap-2">
+                            <span id="optTag" class="text-[11px] sm:text-xs font-bold px-2.5 py-1 rounded-full bg-rose-100 text-rose-700 border border-rose-200 truncate">
+                                🌟 Standard & Santun
+                            </span>
+
+                            <div class="flex items-center space-x-1.5 flex-shrink-0">
+                                <!-- TTS Audio Player Button -->
+                                <button id="playAudioBtn" title="Dengarkan Suara" class="p-2.5 sm:p-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 transition border border-slate-200 touch-manipulation">
+                                    <i data-lucide="volume-2" class="w-4 h-4 text-rose-600"></i>
+                                </button>
+                                <!-- Copy Button -->
+                                <button id="copyBtn" title="Salin Jawaban" class="p-2.5 sm:p-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 transition border border-slate-200 touch-manipulation">
+                                    <i data-lucide="copy" class="w-4 h-4"></i>
+                                </button>
+                                <!-- Bookmark Button -->
+                                <button id="saveBtn" title="Simpan Favorit" class="p-2.5 sm:p-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 transition border border-slate-200 touch-manipulation">
+                                    <i data-lucide="bookmark" class="w-4 h-4" id="bookmarkIcon"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 1. Japanese Text Display -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <span class="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Teks Bahasa Jepang (日本語)</span>
+                                <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded">Bentuk Sopan</span>
+                            </div>
+                            <div id="jpText" class="japanese-text text-base sm:text-lg font-medium text-slate-900 leading-relaxed bg-slate-50 p-3.5 sm:p-4 rounded-xl border border-slate-200/80 min-h-[80px] select-all">
+                                初めまして。インドネシアから来ました。以前から日本の高い技術と文化にとても興味があり、日本語の勉強を続けてきました。特に介護の仕事で自分の経験を活かし、日本の社会に貢献したいと考えております。一生懸命頑張りますので、本日はどうぞよろしくお願いいたします。
+                            </div>
+                        </div>
+
+                        <!-- 2. Romaji Pronunciation -->
+                        <div>
+                            <span class="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Cara Baca (Romaji)</span>
+                            <div id="romajiText" class="text-xs sm:text-sm text-slate-700 italic bg-amber-50/50 p-3 rounded-xl border border-amber-100 leading-relaxed min-h-[50px] select-all">
+                                Hajimemashite. Indonesia kara kimashita. Izen kara Nihon no takai gijutsu to bunka ni totemo kyoumi ga ari, Nihongo no benkyou wo tsudukete kimashita. Tokuni Kaigo no shigoto de jibun no keiken wo ikashi, Nihon no shakai ni kouken shitai to kangaete orimasu. Isshoukenmei gambarimasu node, honjitsu wa douzo yoroshiku onegai itashimasu.
+                            </div>
+                        </div>
+
+                        <!-- 3. Indonesian Translation -->
+                        <div>
+                            <span class="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Terjemahan Indonesia</span>
+                            <div id="idTranslation" class="text-xs sm:text-sm text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-200 min-h-[50px]">
+                                Salam kenal. Saya berasal dari Indonesia. Sejak lama saya sangat tertarik dengan teknologi tinggi dan budaya Jepang, sehingga terus belajar bahasa Jepang. Khususnya di pekerjaan keperawatan (Kaigo), saya ingin memanfaatkan pengalaman saya untuk berkontribusi bagi masyarakat Jepang. Saya akan berusaha sebaik mungkin, mohon bimbingannya hari ini.
+                            </div>
+                        </div>
+
+                        <!-- 4. Points & Strategy Explanation -->
+                        <div class="pt-2 border-t border-slate-100">
+                            <h4 class="text-[10px] sm:text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600"></i>
+                                Poin Keunggulan Jawaban Ini:
+                            </h4>
+                            <p id="pointNotes" class="text-xs text-slate-600 leading-relaxed bg-emerald-50/60 p-3 rounded-xl border border-emerald-100">
+                                Structure padat lengkap: Salam pembuka + asal + minat/latar belakang + komitmen kontribusi di bidang target + penutup formal.
+                            </p>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal Saved Answers -->
+    <div id="savedModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col shadow-2xl">
+            <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+                <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="bookmark" class="w-5 h-5 text-rose-600"></i>
+                    Jawaban Favorit Tersimpan
+                </h3>
+                <button id="closeSavedModal" class="p-1 text-slate-400 hover:text-slate-600 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div id="savedList" class="p-4 overflow-y-auto space-y-3 flex-grow">
+                <!-- Saved items rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 bg-slate-900 text-white text-xs px-4 py-3 rounded-xl shadow-xl flex items-center space-x-2 transition opacity-0 pointer-events-none translate-y-2">
+        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+        <span id="toastMsg">Berhasil disalin!</span>
+    </div>
+
+    <!-- Logic Script -->
+    <script>
+        // Preset Database Offline dengan Jawaban Panjang & Detail (Tanpa elemen Nama)
+        const PRESET_DATA = {
+            jikoshoukai: {
+                title: "1. 自己紹介 (Jikoshoukai - Perkenalan Diri)",
+                options: [
+                    {
+                        tag: "🌟 Standard & Polite",
+                        jp: "初めまして。インドネシアから来ました。以前から日本の高い技術と職場マナーにとても興味があり、日本語の勉強を続けてきました。特に{SECTOR}の仕事で自分の力を発揮し、日本の社会に貢献したいと考えております。一生懸命頑張りますので、本日はどうぞよろしくお願いいたします。",
+                        romaji: "Hajimemashite. Indonesia kara kimashita. Izen kara Nihon no takai gijutsu to shokuba manaa ni totemo kyoumi ga ari, Nihongo no benkyou wo tsudukete kimashita. Tokuni {SECTOR} no shigoto de jibun no chikara wo hakki shi, Nihon no shakai ni kouken shitai to kangaete orimasu. Isshoukenmei gambarimasu node, honjitsu wa douzo yoroshiku onegai itashimasu.",
+                        id: "Salam kenal. Saya berasal dari Indonesia. Sejak lama saya sangat tertarik dengan teknologi tinggi dan etika kerja Jepang, sehingga terus belajar bahasa Jepang. Khususnya di pekerjaan {SECTOR}, saya ingin mengerahkan kemampuan saya untuk berkontribusi bagi masyarakat Jepang. Saya akan berusaha sekuat tenaga, mohon bimbingannya hari ini.",
+                        points: "Jawaban perkenalan komprehensif tanpa menyebutkan nama baku, mencakup latar belakang, ketertiban budaya, dan tekad kontribusi."
+                    },
+                    {
+                        tag: "💡 Berdasar Clue / Kata Kunci",
+                        jp: "初めまして。インドネシアから参りました。私の一番のアピールポイントは「{BG}」ということです。この経験と強みを活かして、日本の{SECTOR}の現場でも素早く仕事に慣れ、チームに貢献したいと思っております。本日は面接の機会をいただき、ありがとうございます。よろしくお願いいたします。",
+                        romaji: "Hajimemashite. Indonesia kara maimashita. Watashi no ichiban no apiiru pointo wa '{BG}' to iu koto desu. Kono keiken to tsuyomi wo ikashite, Nihon no {SECTOR} no genba demo subayaku shigoto ni nare, chiimu ni kouken shitai to omotte orimasu. Honjitsu wa mensetsu no kikai wo itadaki, arigatou gozaimasu. Yoroshiku onegai itashimasu.",
+                        id: "Salam kenal. Saya datang dari Indonesia. Poin keunggulan utama saya adalah '{BG}'. Dengan memanfaatkan pengalaman dan kelebihan ini, saya ingin cepat beradaptasi dengan pekerjaan di lapangan {SECTOR} di Jepang dan berkontribusi bagi tim. Terima kasih atas kesempatan wawancara hari ini. Mohon bimbingannya.",
+                        points: "Mengangkat clue pribadi Anda ke dalam struktur perkenalan yang sopan dan percaya diri."
+                    },
+                    {
+                        tag: "🔥 Semangat & Motivasi Tinggi",
+                        jp: "初めまして！インドネシアから来ました。日本で働くことがずっと私の夢で、毎日熱心に日本語と実務知識を勉強してきました。どんなに大変な仕事であっても、前向きな気持ちで最後までやり遂げる自信があります。{SECTOR}のプロを目指して全力で頑張りますので、どうぞよろしくお願いいたします！",
+                        romaji: "Hajimemashite! Indonesia kara kimashita. Nihon de hataraku koto ga zutto watashi no yume de, mainichi nesshin ni Nihongo to jitsumu chishiki wo benkyou shite kimashita. Donna ni taihen na shigoto de aatte mo, maemuki na kimochi de saigo made yaritogeru jishin ga arimasu. {SECTOR} no puro wo meizashite zenryoku de gambarimasu node, douzo yoroshiku onegai itashimasu!",
+                        id: "Salam kenal! Saya datang dari Indonesia. Bekerja di Jepang adalah impian saya sejak lama, dan setiap hari saya tekun mempelajari bahasa Jepang serta pengetahuan praktis. Seberat apa pun pekerjaannya, saya yakin bisa menyelesaikannya dengan sikap positif hingga akhir. Saya akan berusaha sekuat tenaga menjadi profesional di bidang {SECTOR}, mohon bimbingannya!",
+                        points: "Sangat baik untuk memperlihatkan antusiasme, daya tahan mental, dan keseriusan belajar."
+                    },
+                    {
+                        tag: "🤝 Orientasi Kerjasama/Tim",
+                        jp: "初めまして。インドネシア出身です。私の強みは、明るい笑顔で人と良い me コミュニケーションを取り、協力して仕事を進められることです。日本の職場で職場の皆さんとしっかり報連相（ほうれんそう）を行い、チームワークを大切にして頑張りたいです。本日はよろしくお願いいたします。",
+                        romaji: "Hajimemashite. Indonesia shusshin desu. Watashi no tsuyomi wa, akarui egao de hito to yoi komyunikeeshon wo tori, kyouryoku shite shigoto wo susumereru koto desu. Nihon no shokuba de minasan to shikkari Hourensou wo okonai, chiimuwaaku wo taisetsu ni shite gambaritai desu. Honjitsu wa yoroshiku onegai itashimasu.",
+                        id: "Salam kenal. Saya berasal dari Indonesia. Kelebihan saya adalah dapat berkomunikasi dengan baik dengan senyuman ceria dan bekerja sama menyelesaikan pekerjaan. Di tempat kerja Jepang, saya ingin menerapkan HORENSO dengan baik bersama semua orang dan mengutamakan kerja sama tim. Mohon bimbingannya hari ini.",
+                        points: "Menggunakan kata kunci esensial kerja Jepang seperti HORENSO dan pentingnya keharmonisan tim."
+                    },
+                    {
+                        tag: "⚡ Terstruktur & Lengkap",
+                        jp: "初めまして。インドネシアから参りました。特定技能として日本の{SECTOR}分野で長期間安定して働きたいと考えております。自分の責任を果たし、日本の厳しい品質と安全を守って真面目に努力いたします。本日は貴重なお時間をいただき感謝いたします。どうぞよろしくお願いいたします。",
+                        romaji: "Hajimemashite. Indonesia kara maimashita. Tokutei ginou to shite Nihon no {SECTOR} bunya de choukikan antei shite hatarakitai to kangaete orimasu. Jibun no sekinin wo hatashi, Nihon no kibishii hinshitsu to anzen wo mamotte majime ni doryoku itashimasu. Honjitsu wa kichou na ojikan wo itadaki kansha itashimasu. Douzo yoroshiku onegai itashimasu.",
+                        id: "Salam kenal. Saya datang dari Indonesia. Sebagai pemegang Tokutei Ginou, saya berencana untuk bekerja secara stabil jangka panjang di bidang {SECTOR} di Jepang. Saya akan menjalankan責任 (tanggung jawab) saya, menjaga kualitas dan keamanan ketat ala Jepang, serta berusaha dengan tekun. Terima kasih atas waktu berharga Anda hari ini. Mohon bimbingannya.",
+                        points: "Padat dan elegan, sangat disukai oleh interviewer yang menyukai kepastian komitmen jangka panjang."
+                    }
+                ]
+            },
+            shibou_douki: {
+                title: "2. 志望動機 (Alasan Melamar SSW)",
+                options: [
+                    {
+                        tag: "🌟 Standard & Polite",
+                        jp: "日本の高い技術と丁寧なサービス精神を現場で直接学びたいからです。特に{SECTOR}の分野は社会にとって非常に bundle 重要であり、自分のスキルを磨いて貢献したいと強く思いました。日本で長期間働き、会社から信頼されるスタッフになれるよう努力いたします。",
+                        romaji: "Nihon no takai gijutsu to teinei na saabisu seishin wo genba de chokusetsu manabitai kara desu. Tokuni {SECTOR} no bunya wa shakai ni toteto hijou ni juuyou de ari, jibun no sukiru wo migaku te kouken shitai to tsuyoku omoimashita. Nihon de choukikan hataraki, kaisha kara shinrai sareru sutaffu ni nareru you doryoku itashimasu.",
+                        id: "Karena saya ingin mempelajari langsung di lapangan mengenai teknologi tinggi dan semangat pelayanan sopan khas Jepang. Khususnya bidang {SECTOR} sangat penting bagi masyarakat, dan saya sangat ingin mengasah keterampilan saya untuk berkontribusi. Saya akan berusaha bekerja jangka panjang di Jepang dan menjadi staf yang dipercaya perusahaan.",
+                        points: "Alasan lengkap berdurasi sedang yang menekankan kontribusi dan kemauan belajar etika Jepang."
+                    },
+                    {
+                        tag: "💡 Berdasar Clue / Kata Kunci",
+                        jp: "「{BG}」という背景から、{SECTOR}の仕事に対して深い関心を持つようになりました。日本の現場でプロの技術を身につけ、お客様やチームの役に立ちたいと考えて応募いたしました。自分の強みを最大限に活かして頑張ります。",
+                        romaji: "'{BG}' to iu haikei kara, {SECTOR} no shigoto ni taishte fukai kanshin wo motsu you ni narimashita. Nihon no genba de puro no gijutsu wo mi ni tsuke, okyakusama ya chiimu no yaku ni tachitai to kangaete oubo itashimasu. Jibun no tsuyomi wo saidaihan ni ikashite gambarimasu.",
+                        id: "Berdasarkan latar belakang '{BG}', saya menjadi memiliki ketertarikan mendalam terhadap pekerjaan {SECTOR}. Saya melamar karena ingin menguasai keterampilan profesional di lapangan Jepang serta menjadi berguna bagi pelanggan dan tim. Saya akan berusaha memanfaatkan keunggulan saya secara maksimal.",
+                        points: "Menghubungkan latar belakang/clue pengguna secara alami dengan motivasi melamar."
+                    },
+                    {
+                        tag: "🔥 Semangat & Motivasi Tinggi",
+                        jp: "日本の厳しい品質管理と安全基準のもとで自分の力を試したいからです。最初はいろいろな大変なことがあると思いますが、諦めずに厳しい指導を受け入れて成長したいです！{SECTOR}の仕事で一番の頑張り屋を目指します！",
+                        romaji: "Nihon no kibishii hinshitsu kanri to anzen kijun no moto de jibun no chikara wo tameshitai kara desu. Saisho wa iroiro na taihen na koto ga aru to omoimasu ga, akiramenazu ni kibishii shidou wo ukeirete seichou shitai desu! {SECTOR} no shigoto de ichiban no gambariya wo meizashimasu!",
+                        id: "Karena saya ingin menguji kemampuan diri di bawah standar keamanan dan manajemen kualitas Jepang yang ketat. Walau awal-awal akan ada banyak tantangan, saya tidak akan menyerah dan siap menerima bimbingan tegas demi berkembang! Saya bertekad menjadi pekerja paling giat di bidang {SECTOR}!",
+                        points: "Menunjukkan daya tahan mental (忍耐力) dan tekad pantang menyerah."
+                    },
+                    {
+                        tag: "🤝 Orientasi Kerjasama/Tim",
+                        jp: "日本人の真面目な働き方や、チームで協力し合う姿勢を深く尊敬しているからです。笑顔でのコミュニケーションを忘れず、職場の皆さんと良い関係を築きながら{SECTOR}の現場を支えていきたいと考えております。",
+                        romaji: "Nihonjin no majime na hatarakikata ya, chiimu de kyouryoku shiau shisei wo fukaku sonkei shite iru kara desu. Egao de no komyunikeeshon wo wasurezu, shokuba no minasan to yoi kankei wo kizukinagara {SECTOR} no genba wo sasaete ikitai to kangaete orimasu.",
+                        id: "Karena saya sangat mengagumi cara kerja tekun orang Jepang serta sikap saling bekerja sama dalam tim. Tanpa melupakan komunikasi tersenyum, saya ingin membangun hubungan baik dengan rekan kerja dan menyokong operasional lapangan {SECTOR}.",
+                        points: "Cocok untuk bidang seperti Kaigo dan Restoran yang sangat mengedepankan hubungan antarmanusia."
+                    },
+                    {
+                        tag: "⚡ Terstruktur & Lengkap",
+                        jp: "特定技能制度を活用し、{SECTOR}のプロフェッショナルとして専門知識を高めたいからです。日本で5年以上の長期にわたり安定して働き、会社と社会の発展に貢献することが私の目標です。全力で業務に邁進いたします。",
+                        romaji: "Tokutei ginou seido wo katsuyou shi, {SECTOR} no purofeshhonaru to shite senmon chishiki wo takametai kara desu. Nihon de go-nen ijou no choukikan ni watari antei shite hataraki, kaisha to shakai no hatten ni kouken suru koto ga watashi no mokuhyou desu. Zenryoku de gyoumu ni maishin itashimasu.",
+                        id: "Karena saya ingin memanfaatkan sistem Tokutei Ginou untuk tingkatkan pengetahuan spesialis sebagai profesional di {SECTOR}. Target saya adalah bekerja secara stabil jangka panjang selama lebih dari 5 tahun di Jepang dan berkontribusi pada kemajuan perusahaan serta masyarakat. Saya akan fokus bekerja sepenuh hati.",
+                        points: "Bahasa bernada formal N3 yang memperlihatkan rencana karir matang."
+                    }
+                ]
+            },
+            why_japan: {
+                title: "3. なぜ日本ですか (Mengapa memilih Jepang?)",
+                options: [
+                    {
+                        tag: "🌟 Standard & Polite",
+                        jp: "日本は治安がとても良く、人々がルールやマナーをしっかり守る素晴らしい国だからです。このような安心できる環境で、仕事の技術だけでなく日本の丁寧な働き方も学びたいと思い、日本で働くことを決意いたしました。",
+                        romaji: "Nihon wa chian ga totemo yoku, hitobito ga ruuru ya manaa wo shikkari mamoru subarashii kuni dakara desu. Kono you na anshin dekiru kankyou de, shigoto no gijutsu dake de nakuk Nihon no teinei na hatarakikata mo manabitai to omoi, Nihon de hataraku koto wo ketsui itashimasu.",
+                        id: "Karena Jepang adalah negara luar biasa yang keamanan publiknya sangat baik, serta masyarakatnya menaati aturan dan etika dengan ketat. Di lingkungan yang nyaman ini, saya ingin belajar tidak hanya skill pekerjaan tetapi juga cara kerja yang santun khas Jepang, sehingga saya memutuskan bekerja di Jepang.",
+                        points: "Menyoroti rasa aman, kerapian, dan kekaguman pada budaya kerja Jepang secara runut."
+                    },
+                    {
+                        tag: "💡 Berdasar Clue / Kata Kunci",
+                        jp: "私にとって「{BG}」という考えが強くあり、それを最も深められる場所が日本だと感じたからです。日本の高い技術に触れながら、自分自身を大きく成長させたいと考えております。",
+                        romaji: "Watashi ni totte '{BG}' to iu kangaeka ga tsuyoku ari, sore wo mottomo fukamereru basho ga Nihon da to kanjita kara desu. Nihon no takai gijutsu ni furenagara, jibun jishin wo ookiku seichou sasetai to kangaete orimasu.",
+                        id: "Bagi saya pemikiran mengenai '{BG}' sangatlah kuat, dan saya merasa Jepang adalah tempat terbaik untuk memperdalam hal tersebut. Sambil bersentuhan langsung dengan teknologi tinggi Jepang, saya ingin mengembangkan diri saya secara signifikan.",
+                        points: "Mengaitkan filosofi pribadi/clue Anda dengan alasan spesifik memilih negara Jepang."
+                    },
+                    {
+                        tag: "🔥 Semangat & Motivasi Tinggi",
+                        jp: "学生の頃から日本の文化や日本語に強い魅力を感じて勉強を重ねてきたからです。ただ好きというだけでなく、日本の現場で実際に働き、自分の力で成功を掴みたいという強い情熱を持っています！",
+                        romaji: "Gakusei no koro kara Nihon no bunka ya Nihongo ni tsuyoi miryoku wo kanji te benkyou wo kasanete kimashita kara desu. Tada suki to iu dake de nakuk, Nihon no genba de jissai ni hataraki, jibun no chikara de seikou wo tsukamatai to iu tsuyoi jounetsu wo motte imasu!",
+                        id: "Karena sejak berstatus pelajar saya merasa sangat tertarik dengan budaya dan bahasa Jepang sehingga terus belajar. Bukan sekadar menyukai, saya memiliki passion yang kuat untuk benar-benar bekerja di lapangan Jepang dan menggapai kesuksesan dengan usaha sendiri!",
+                        points: "Sangat baik untuk memperlihatkan historis minat yang panjang disertai dorongan passion."
+                    },
+                    {
+                        tag: "🤝 Orientasi Kerjasama/Tim",
+                        jp: "日本には『おもてなし』や『思いやり』の心があり、みんなで助け合って働く文化があるからです。私もそうした温かいチームの一員となり、周囲の人と協力しながら気持ちよく働きたいと考えました。",
+                        romaji: "Nihon ni wa 'Omotenashi' ya 'Omoiyari' no kokoro ga ari, minna de tasukeatte hataraku bunka ga aru kara desu. Watashi mo soushita atatakai chiimu no ichiin to nari, shuui no hito to kyouryoku shinagara kimochi yoku hatarakitai to kangaemashita.",
+                        id: "Karena di Jepang terdapat semangat 'Omotenashi' (keramahan) dan 'Omoiyari' (tenggang rasa), serta budaya saling membantu dalam bekerja. Saya pun ingin menjadi bagian dari tim yang hangat tersebut dan bekerja dengan nyaman bersama orang-orang di sekitar.",
+                        points: "Menggunakan istilah positif budaya Jepang seperti Omotenashi & Omoiyari."
+                    },
+                    {
+                        tag: "⚡ Terstruktur & Lengkap",
+                        jp: "日本は世界トップクラスの技術力と先進的な産業システムを持っているからです。日本で仕事を経験することは、私のキャリアにとって非常に価値があり、一生懸命働いて期待に応えたいと思っております。",
+                        romaji: "Nihon wa sekai toppukurasu no gijutsuryoku to senshinteki na sangyou shisutemu wo motte iru kara desu. Nihon de shigoto wo keiken suru koto wa, watashi no karia ni totte hijou ni kachi ga ari, isshoukenmei hataraitte kitai ni kotaetai to omotte orimasu.",
+                        id: "Karena Jepang memiliki kekuatan teknologi kelas dunia dan sistem industri yang maju. Memiliki pengalaman kerja di Jepang sangat berharga bagi karir saya, dan saya ingin bekerja sebaik mungkin untuk memenuhi ekspektasi perusahaan.",
+                        points: "Penjelasan terstruktur dari sudut pandang profesionalitas dan karir."
+                    }
+                ]
+            },
+            chousho_tansho: {
+                title: "4. 長所と短所 (Kelebihan & Kekurangan)",
+                options: [
+                    {
+                        tag: "🌟 Standard & Polite",
+                        jp: "私の長所は、真面目で一度決めたことは最後まで責任を持ってやり遂げることです。一方、短所は少し心配性で慎重すぎるところです。そのため、仕事では勝手に判断せず、必ずメモを取り、先輩に確認（ダブルチェック）をしてミスを防ぐよう心がけております。",
+                        romaji: "Watashi no chousho wa, majime de ichido kimata koto wa saigo made sekiningan wo motte yaritogeru koto desu. Ippou, tansho wa sukoshi shinpai shou de shinchou sugiru tokoro desu. Sono tame, shigoto de wa katte ni handan sezu, kanarazu memo wo tori, senpai ni kakunin (daburu chekku) wo shite misu wo fusegu you kokorogakete orimasu.",
+                        id: "Kelebihan saya adalah tekun dan selalu bertanggung jawab menyelesaikannya hingga akhir jika sudah memutuskan sesuatu. Di sisi lain, kekurangan saya agak mudah khawatir dan terlalu berhati-hati. Oleh karena itu, dalam bekerja saya tidak pernah mengambil keputusan sendiri, melainkan selalu mencatat dan melakukan double check ke atasan untuk mencegah kesalahan.",
+                        points: "Formula standar emas interview Jepang: Menyebutkan kekurangan yang langsung diimbangi solusi konkret (Double check & buat catatan)."
+                    },
+                    {
+                        tag: "💡 Berdasar Clue / Kata Kunci",
+                        jp: "長所は「{BG}」という点で、どんな状況でも諦めずに努力を続けられます。短所としては一つのことに集中しすぎてしまう点がありますが、常に周りの me 状況を確認し、優先順位を考えて行動するよう注意しています。",
+                        romaji: "Chousho wa '{BG}' to iu ten de, donna joukyou demo akiramenazu ni doryoku wo tsudukeraremasu. Tansho to shite wa hitotsu no koto ni shuuchuu sugite shimau ten ga arimasu ga, tsune ni mawari no joukyou wo kakunin shi, yuusen jun'i wo kangaete koudou suru you chuui shite imasu.",
+                        id: "Kelebihan saya adalah poin '{BG}', di mana saya terus berusaha tanpa menyerah dalam situasi apa pun. Kekurangan saya adalah terkadang terlalu fokus pada satu hal, tetapi saya selalu mengatasinya dengan mengecek situasi sekitar dan memprioritaskan tugas.",
+                        points: "Menyoroti clue keunggulan diri dengan penanganan kekurangannya secara dewasa."
+                    },
+                    {
+                        tag: "🔥 Semangat & Motivasi Tinggi",
+                        jp: "私の長所は、いつも明るく元気に周囲を mop モチベーションを上げられることです！短所は完璧を目指しすぎて時間がかかる場合があることです。そのため、時間を意識して効率よく作業を進めるよう工夫しています。",
+                        romaji: "Watashi no chousho wa, itsumo akaruku genki ni shuui no mochibeeshon wo agerareru koto desu! Tansho wa kanpeki wo meizashisugite jikan ga kakarubaai ga aru koto desu. Sono tame, jikan wo iishiki shite kouriki yoku sagyou wo susumeru you kufuu shite imasu.",
+                        id: "Kelebihan saya adalah selalu ceria dan bersemangat meningkatkan motivasi orang-orang di sekitar! Kekurangan saya adalah terkadang memakan waktu karena ingin hasil sempurna. Oleh karena itu, saya selalu memperhatikan manajemen waktu agar bisa bekerja dengan efisien.",
+                        points: "Perpaduan energi positif yang menularkan kebaikan dengan kesadaran manajemen waktu."
+                    },
+                    {
+                        tag: "🤝 Orientasi Kerjasama/Tim",
+                        jp: "長所は、誰とでもすぐに良好な人間関係を築けるコミュニケーション能力です。短所は頼まれたことを断るのが苦手なところですが、自分の仕事のキャパシティを考えて、上司に相談しながら調整するよう努めています。",
+                        romaji: "Chousho wa, dare to demo sugu ni ryoukou na ningenkankei wo kizukeru komyunikeeshon nouryoku desu. Tansho wa頼まれた koto wo kotowaru no ga nigate na tokoro desu ga, jibun no shigoto no kyapashiti wo kangaete, joushi ni soudan shinagara chuusei suru you tsutamete imasu.",
+                        id: "Kelebihan saya adalah kemampuan komunikasi yang membuat saya mudah membangun hubungan baik dengan siapa saja. Kekurangan saya adalah agak segan menolak permintaan orang, namun saya belajar mengukur kapasitas kerja saya dan berkonsultasi dengan atasan.",
+                        points: "Menunjukkan sifat fleksibel dan mudah membaur di lingkungan kerja multi-kultural."
+                    },
+                    {
+                        tag: "⚡ Terstruktur & Lengkap",
+                        jp: "長所は計画性があり、目標に向かってコツコツ努力できる点です。短所は変化に対して少し慎重になるところですが、事前準備をしっかり行うことで柔軟に対応できるようトレーニングしております。",
+                        romaji: "Chousho wa keikakusei ga ari, mokuhyou ni mukatte kotsukotsu doryoku dekiru ten desu. Tansho wa henka ni taishte sukoshi shinchou ni naru tokoro desu ga, jizen junbi wo shikkari okonau koto de juunan ni taiou dekiru you toreeningu shite orimasu.",
+                        id: "Kelebihan saya adalah terencana dan mampu berusaha secara konsisten mencapai target. Kekurangan saya adalah agak berhati-hati terhadap perubahan tiba-tiba, namun saya melatih diri agar fleksibel dengan melakukan persiapan matang sebelumnya.",
+                        points: "Menunjukkan karakter yang teratur, disiplin, dan matang."
+                    }
+                ]
+            },
+            kenkou_kanri: {
+                title: "5. 健康管理 (Kesehatan & Stres)",
+                options: [
+                    {
+                        tag: "🌟 Standard & Polite",
+                        jp: "毎日十分な睡眠をとり、バランスの良い食事を心がけています。また、ストレスを感じた時は、休日に散歩をしたり音楽を聴いたりしてリフレッシュしています。体調管理はプロとして当然の義務だと考えておりますので、健康状態はとても良好です。",
+                        romaji: "Mainichi juubun na suimin wo tori, baransu no yoi shokuji wo kokorogakete imasu. Mata, sutoresu wo kanjita toki wa, kyuujitsu ni sanpo wo shitari ongaku wo kiitari shite rifureshhu shite imasu. Taichou kanri wa puro to shite touzen no gimu da to kangaete orimasu node, kenkou joutai wa totemo ryoukou desu.",
+                        id: "Saya selalu menjaga tidur yang cukup setiap hari dan mengonsumsi makanan dengan gizi seimbang. Selain itu saat merasa stres, saya melakukan penyegaran dengan berjalan-jalan di hari libur atau mendengarkan musik. Saya menganggap menjaga kondisi tubuh adalah kewajiban profesional, sehingga kesehatan saya sangat baik.",
+                        points: "Jawaban komplit yang menegaskan bahwa menjaga kesehatan adalah kewajiban seorang pekerja (プロとしての義務)."
+                    },
+                    {
+                        tag: "💡 Berdasar Clue / Kata Kunci",
+                        jp: "健康維持のために「{BG}」を日課にしています。おかげで体力にはとても自信があり、これまで大きな病気もしたことがありません。ストレスも溜め込まずにうまく解消できているため、毎日元気に働くことができます。",
+                        romaji: "Kenkou iji no tame ni '{BG}' wo nikka ni shite imasu. Okage de tairyoku ni wa totemo jishin ga ari, kore made ookina byouki mo shita koto ga arimasen. Sutoresu mo tamekomazu ni umaku kaishou dekite iru tame, mainichi genki ni hataraku koto ga dekimasu.",
+                        id: "Demi menjaga kesehatan, saya menjadikan '{BG}' sebagai rutinitas harian. Berkat itu saya sangat percaya diri dengan stamina tubuh dan tidak pernah sakit berat. Saya juga bisa mengurai stres dengan baik tanpa memendamnya, sehingga bisa bekerja fit setiap hari.",
+                        points: "Menghubungkan kebiasaan sehat pribadi dari kata kunci pengguna."
+                    },
+                    {
+                        tag: "🔥 Semangat & Motivasi Tinggi",
+                        jp: "早寝早起きと毎日の適度な運動を徹底しています！休みの日にはスポーツをしたり友人と会話を楽しんだりして、気持ちを切り替えています。体力とメンタルの両方を常にベストな状態に保っています！",
+                        romaji: "Hayane hayaoki to mainichi no tekido na undou wo tettei shite imasu! Yasumi no hi ni wa supootsu wo shitari yuujin to kaiwa wo tanoshimitari shite, kimochi wo kiriwaitaimasu. Tairyoku to mentaru no ryouhou wo tsune ni besuto na joutai ni保っています!",
+                        id: "Saya menerapkan tidur cepat bangun pagi dan olahraga teratur setiap hari! Pada hari libur saya berolahraga atau menikmati ngobrol dengan teman untuk menyegarkan pikiran. Saya selalu menjaga kondisi stamina dan mental dalam keadaan terbaik!",
+                        points: "Gaya jawaban dinamis yang menyukai pola hidup disiplin dan aktif."
+                    },
+                    {
+                        tag: "🤝 Orientasi Kerjasama/Tim",
+                        jp: "日頃から体調管理に気を配るとともに、万が一體調が優れない時は無理をせず、早めに先輩や上司に報告・相談いたします。自分の健康を守ることは、チームや会社にご迷惑をかけないためにも重要だと認識しております。",
+                        romaji: "Higoro kara taichou kanri ni ki wo kubaru toともに, man'ichii taichou ga sugurenai toki wa muri wo sezu, hayame ni senpai ya joushi ni houkoku・soudan itashimasu. Jibun no kenkou wo mamoru koto wa, chiimu ya kaisha ni gomeiwaku wo kakenai tame ni mo juuyou da to ninshiki shite orimasu.",
+                        id: "Selain menjaga tubuh sehari-hari, jika seandainya merasa kurang sehat saya tidak akan memaksakan diri dan segera melapor/konsultasi ke atasan. Saya menyadari menjaga kesehatan diri penting agar tidak merepotkan tim maupun perusahaan.",
+                        points: "Perspektif tanggung jawab sosial terhadap rekan kerja dan tim."
+                    },
+                    {
+                        tag: "⚡ Terstruktur & Lengkap",
+                        jp: "規則正しい生活リズムと栄養管理を徹底しております。休日のセルフケアによりストレスを適切にコントロールしており、日本での厳しい勤務環境にも十分適応できる体力と精神力を備えております。",
+                        romaji: "Kisoku tadashii seikatsu rizumu to eiyou kanri wo tettei shite orimasu. Kyuujitsu no serufu kea ni yori sutoresu wo tekisetsu ni kontrooru shite ori, Nihon de no kibishii kinmu kankyou ni mo juubun tekiou dekiru tairyoku to seishinryoku wo sonaete orimasu.",
+                        id: "Saya menerapkan ritme hidup yang teratur dan manajemen nutrisi dengan disiplin. Melalui self-care di hari libur saya mengontrol stres dengan tepat, sehingga memiliki stamina dan mental yang sanggup beradaptasi di lingkungan kerja Jepang.",
+                        points: "Kalimat formal berkesan dewasa dan tangguh."
+                    }
+                ]
+            },
+            tough_work: {
+                title: "6. 大変な時どうしますか (Menghadapi Pekerjaan Berat)",
+                options: [
+                    {
+                        tag: "🌟 Standard & Polite",
+                        jp: "仕事で大変なことや分からないことがあった場合は、自分勝手に判断せず、すぐに先輩や上司に質問して確認いたします。そして、教えていただいたアドバイスをノートにメモし、同じミスを繰り返さないよう落ち着いて一つずつ解決してまいります。",
+                        romaji: "Shigoto de taihen na koto ya wakaranai koto ga atta baai wa, jibun katte ni handan sezu, sugu ni senpai ya joushi ni shitsumon shite kakunin itashimasu. Soshite, oshiete itadaita adobaisu wo memo shi, onaji misu wo kurikaesanai you ochitsuite hitotsu zutsu kaiketsu shite mairimasu.",
+                        id: "Jika ada hal yang berat atau tidak dimengerti dalam pekerjaan, saya tidak akan mengambil keputusan sendiri melainkan segera bertanya dan konfirmasi ke atasan. Kemudian saya akan mencatat nasihat yang berikan di buku catatan dan menyelesaikannya satu per satu dengan tenang agar tidak mengulangi kesalahan yang sama.",
+                        points: "Jawaban ideal yang disukai bos Jepang: Tidak sotoy (asal tebak), bertanya, membuat catatan, dan tenang."
+                    },
+                    {
+                        tag: "💡 Berdasar Clue / Kata Kunci",
+                        jp: "大変な状況に直面した時は「{BG}」という心構えを大切にします。パニックにならずに優先順位を整理し、自分ができることに全力を尽くします。必要に応じて周囲にサポートを求め、乗り越えていきます。",
+                        romaji: "Taihen na joukyou ni chokumen shita toki wa '{BG}' to iu kokorogamae wo taisetsu ni shimasu. Panikku ni narazu ni yuusen jun'i wo seiri shi, jibun ga dekiru koto ni zenryoku wo tsukushimasu. Hitsuyou ni oojite shuui ni sapooto wo motome, norikoete ikimasu.",
+                        id: "Saat menghadapi situasi sulit, saya mengutamakan sikap '{BG}'. Tanpa panik saya memprioritaskan tugas dan mengerahkan kemampuan terbaik pada apa yang bisa saya lakukan. Jika diperlukan saya akan meminta dukungan rekan kerja untuk melewatinya.",
+                        points: "Menggunakan clue sebagai pijakan filosofi penyelesaian masalah."
+                    },
+                    {
+                        tag: "🔥 Semangat & Motivasi Tinggi",
+                        jp: "大変な時こそ、自分が成長できる絶好のチャンスだと捉えます！辛い気持ちに負けず、前向きな姿勢で努力を重ね、困難な課題も最後まで責任を持って乗り越えてみせます！",
+                        romaji: "Taihen na toki koso, jibun ga seichou dekiru zekkou no chansu da to toraemasu! Tsurai kimochi ni makezu, maemuki na shisei de doryoku wo kasane, konnan na kadai mo saigo made sekiningan wo motte norikoete misemasu!",
+                        id: "Justru saat-saat sulit adalah kesempatan emas bagi saya untuk tumbuh! Tanpa kalah oleh rasa lelah, saya bertekad terus berusaha dengan sikap positif dan bertanggung jawab menyelesaikan tantangan hingga akhir!",
+                        points: "Sangat menonjolkan mentalitas baja dan ketahanan tekanan kerja."
+                    },
+                    {
+                        tag: "🤝 Orientasi Kerjasama/Tim",
+                        jp: "一人で抱え込まずに、チームのメンバーとしっかりコミュニケーションを取ることが重要だと考えます。問題を共有し、お互いに助け合いながら、職場の仲間とともに困難を解決していきます。",
+                        romaji: "Hitori de kakaekomazu ni, chiimu no menbaa to shikkari komyunikeeshon wo toru koto ga juuyou da to kangaemasu. Mondai wo kyouyuu shi, otagai ni tasukeainagara, shokuba no nakama to totoni konnan wo kaiketsu shite ikimasu.",
+                        id: "Saya beranggapan penting untuk tidak memikul masalah sendirian, melainkan berkomunikasi baik dengan anggota tim. Dengan saling berbagi masalah dan membantu, kami akan menyelesaikan kesulitan bersama rekan-rekan.",
+                        points: "Menunjukkan pemahaman pentingnya kolaborasi dan transparansi masalah."
+                    },
+                    {
+                        tag: "⚡ Terstruktur & Lengkap",
+                        jp: "まずは現状を冷静に me 分析し、課題の原因を特定いたします。その上で適切な対策を立て、指示を仰ぎながら迅速に対応いたします。失敗を恐れず、経験として次に活かす姿勢を大切にいたします。",
+                        romaji: "Mazuwa genjou wo meiseki ni bunseki shi, kadai no gen'in wo tokutei itashimasu. Sono ue de tekisetsu na taisaku wo tate, shiji wo aoginagara jinsoku ni taiou itashimasu. Shippai wo osorezu, keiken to shite tsugi ni ikasu shisei wo taisetsu ni itashimasu.",
+                        id: "Pertama saya menganalisis situasi dengan tenang dan mengidentifikasi penyebab masalah. Setelah itu saya menyusun langkah tepat dan merespons cepat sesuai petunjuk atasan. Saya menghargai sikap tidak takut gagal dan menggunakannya sebagai pelajaran.",
+                        points: "Jawaban problem solving ala N3 dengan bahasa bisnis sopan."
+                    }
+                ]
+            },
+            future_goals: {
+                title: "7. 将来の目標 (Rencana 5 Tahun Ke Depan)",
+                options: [
+                    {
+                        tag: "🌟 Standard & Polite",
+                        jp: "5年間の特定技能の期間中に、{SECTOR}の専門技術を極め、日本語能力試験のN2レベルにも合格したいです。そして将来は、後輩の指導や現場の管理ができる信頼されるリーダーになりたいと考えております。会社に長く貢献できるよう日々努力を重ねます。",
+                        romaji: "Go-nenkan no Tokutei Ginou no kikan chuu ni, {SECTOR} no senmon gijutsu wo kiwame, Nihongo nouryoku shiken no N2 reberu ni mo goukaku shitai desu. Soshite shourai wa, kouhai no shidou ya genba no kanri ga dekiru shinrai sareru riidaa ni naritai to kangaete orimasu. Kaisha ni nagaku kouken dekiru you hibi doryoku wo kasanemasu.",
+                        id: "Dalam masa 5 tahun Tokutei Ginou, saya ingin menguasai mendalam keterampilan spesialis {SECTOR} dan lulus JLPT N2. Serta di masa depan, saya ingin menjadi leader terpercaya yang bisa membimbing junior dan mengelola lapangan. Saya akan berusaha setiap hari agar bisa berkontribusi jangka panjang bagi perusahaan.",
+                        points: "Target realistis, memiliki indikator terukur (N2), dan berkeinginan naik tingkat jadi leader."
+                    },
+                    {
+                        tag: "💡 Berdasar Clue / Kata Kunci",
+                        jp: "将来の大きな目標は「{BG}」を実現することです。そのためにまず日本の{SECTOR}の現場で実務 me 経験を積み、確かな技術と信頼を獲得したいです。夢に向かって一歩ずつ着実に努力を続けてまいります。",
+                        romaji: "Shourai no ookina mokuhyou wa '{BG}' wo jitsugen suru koto desu. Sono tame ni mazu Nihon no {SECTOR} no genba de jitsumu keiken wo tsumi, tashika na gijutsu to shinrai wo kakutoku shitai desu. Yume ni mukatte ippo zutsu chakujitsu ni doryoku wo tsudukete mairimasu.",
+                        id: "Target besar saya di masa depan adalah mewujudkan '{BG}'. Untuk itu, pertama-tama saya ingin menimba pengalaman praktis di lapangan {SECTOR} di Jepang serta meraih keahlian nyata dan kepercayaan. Saya akan terus berusaha selangkah demi selangkah menuju impian tersebut.",
+                        points: "Merangkai impian/clue pengguna ke dalam visi karir yang jelas."
+                    },
+                    {
+                        tag: "🔥 Semangat & Motivasi Tinggi",
+                        jp: "日本で学んだ素晴らしい技術と最高のサービス精神を完全にマスターすることです！将来は日本と母国をつなぐ架け橋のような存在となり、どちらの国でも活躍できる高度な人材を目指して全力で挑戦し続けます！",
+                        romaji: "Nihon de mananda subarashii gijutsu to saikou no saabisu seishin wo kanzen ni masutaa suru koto desu! Shourai wa Nihon to bokoku wo tsunagu kakehashi no you na sonzai to nari, dochira no kuni demo katsuyaku dekiru koudo na jinzai wo meizashite zenryoku de chousen tsudukemasu!",
+                        id: "Menguasai penuh teknologi luar biasa dan semangat pelayanan terbaik yang saya pelajari di Jepang! Di masa depan saya ingin menjadi sosok jembatan yang menghubungkan Jepang dan negara asal, serta terus menantang diri menjadi SDM unggul yang sukses di kedua negara!",
+                        points: "Visi jangka panjang menjembatani Jepang-Indonesia (Kakehashi/架け橋)."
+                    },
+                    {
+                        tag: "🤝 Orientasi Kerjasama/Tim",
+                        jp: "職場の皆さんから『あなたと一緒に働けて良かった』と言われるような、頼りになる職員になることです。日本語ももっと上達させて、日本人スタッフと外国人スタッフの間のコミュニケーションをスムーズにするサポートがしたいです。",
+                        romaji: "Shokuba no minasan kara 'Anata to issho ni hatarakete yokatta' to iwareru you na, tayori ni naru shokuin ni naru koto desu. Nihongo mo motto joutatsu sasete, Nihonjin sutaffu to gaikokujin sutaffu no aida no komyunikeeshon wo sumuuzu ni suru sapooto ga shitai desu.",
+                        id: "Menjadi karyawan diandalkan yang membuat rekan kerja berkata 'Senang bisa bekerja bersamamu'. Saya juga ingin memperlancar bahasa Jepang saya untuk membantu komunikasi antara staf Jepang dan staf asing.",
+                        points: "Menyoroti keinginan menjadi penengah dan pendorong suasana kerja harmonis."
+                    },
+                    {
+                        tag: "⚡ Terstruktur & Lengkap",
+                        jp: "まずは3年以内に業務全般を一人で完璧にこなせるようになり、5年目にはリーダーシップを発揮して現場を引っ張る存在になることです。継続的な自己研鑽を行い、会社の発展に長期的かつ持続的に貢献いたします。",
+                        romaji: "Mazuwa san-nen inai ni gyoumu zenban wo hitori de kanpeki ni konaseru you ni nari, go-nen me ni wa riidaashippu wo hakki shite genba wo hipparu sonzai ni naru koto desu. Keizokuteki na jiko kensan wo okonai, kaisha no hatten ni choukikan katsu jizokuteki ni kouken itashimasu.",
+                        id: "Pertama, dalam 3 tahun saya ingin sanggup menangani seluruh tugas mandiri secara sempurna, dan di tahun ke-5 menjadi sosok yang memimpin lapangan dengan leadership. Saya akan terus mengembangkan diri dan berkontribusi secara berkelanjutan jangka panjang.",
+                        points: "Rencana bertahap (3 tahun - 5 tahun) ala profesional."
+                    }
+                ]
+            }
+        };
+
+        // Application State
+        let currentQuestionKey = "jikoshoukai";
+        let activeTabIndex = 0;
+        let generatedOptions = [];
+        let savedItems = JSON.parse(localStorage.getItem("ssw_saved_answers") || "[]");
+
+        // DOM Elements
+        const questionPresetSelect = document.getElementById("questionPreset");
+        const customQuestionContainer = document.getElementById("customQuestionContainer");
+        const customQuestionInput = document.getElementById("customQuestionInput");
+        const sswSectorSelect = document.getElementById("sswSector");
+        const jlptLevelSelect = document.getElementById("jlptLevel");
+        const userKeywordsInput = document.getElementById("userKeywords");
+        const generateBtn = document.getElementById("generateBtn");
+        const refreshBtn = document.getElementById("refreshBtn");
+        const refreshIcon = document.getElementById("refreshIcon");
+        const currentQuestionTitle = document.getElementById("currentQuestionTitle");
+        const optionTabs = document.getElementById("optionTabs");
+        const loadingOverlay = document.getElementById("loadingOverlay");
+        const loadingText = document.getElementById("loadingText");
+        const apiStatusBadge = document.getElementById("apiStatusBadge");
+
+        // Answer Display Card Elements
+        const optTag = document.getElementById("optTag");
+        const jpText = document.getElementById("jpText");
+        const romajiText = document.getElementById("romajiText");
+        const idTranslation = document.getElementById("idTranslation");
+        const pointNotes = document.getElementById("pointNotes");
+        const playAudioBtn = document.getElementById("playAudioBtn");
+        const copyBtn = document.getElementById("copyBtn");
+        const saveBtn = document.getElementById("saveBtn");
+        const bookmarkIcon = document.getElementById("bookmarkIcon");
+
+        // Modal Elements
+        const savedModal = document.getElementById("savedModal");
+        const toggleSavedModalBtn = document.getElementById("toggleSavedModal");
+        const closeSavedModalBtn = document.getElementById("closeSavedModal");
+        const savedList = document.getElementById("savedList");
+        const savedCountSpan = document.getElementById("savedCount");
+
+        // Toast Element
+        const toast = document.getElementById("toast");
+        const toastMsg = document.getElementById("toastMsg");
+
+        // Init App
+        window.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            updateSavedBadge();
+            if (apiStatusBadge) apiStatusBadge.classList.remove("hidden");
+            setupEventListeners();
+            triggerGenerateProcess();
+        });
+
+        // Setup Event Listeners
+        function setupEventListeners() {
+            questionPresetSelect.addEventListener("change", (e) => {
+                if (e.target.value === "custom") {
+                    customQuestionContainer.classList.remove("hidden");
+                } else {
+                    customQuestionContainer.classList.add("hidden");
+                }
+            });
+
+            const tabButtons = optionTabs.querySelectorAll(".tab-btn");
+            tabButtons.forEach((btn, index) => {
+                btn.addEventListener("click", () => {
+                    setActiveTab(index);
+                });
+            });
+
+            generateBtn.addEventListener("click", () => triggerGenerateProcess());
+            
+            refreshBtn.addEventListener("click", () => {
+                refreshIcon.classList.add("animate-spin");
+                triggerGenerateProcess(() => {
+                    refreshIcon.classList.remove("animate-spin");
+                });
+            });
+
+            // Audio Speech Synthesizer (TTS)
+            playAudioBtn.addEventListener("click", () => {
+                const currentOpt = generatedOptions[activeTabIndex];
+                if (!currentOpt || !currentOpt.jp) return;
+
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(currentOpt.jp);
+                    utterance.lang = 'ja-JP';
+                    utterance.rate = 0.88; // Pace yang pas untuk belajar pengucapan sopan
+                    window.speechSynthesis.speak(utterance);
+                    showToast("🔊 Memutar audio pengucapan...");
+                } else {
+                    showToast("Fitur audio tidak didukung di browser ini.");
+                }
+            });
+
+            // Clipboard Copy
+            copyBtn.addEventListener("click", () => {
+                const currentOpt = generatedOptions[activeTabIndex];
+                if (!currentOpt) return;
+
+                const textToCopy = `[Pertanyaan SSW Mensetsu]\n${currentQuestionTitle.innerText}\n\n[Jepang]: ${currentOpt.jp}\n\n[Romaji]: ${currentOpt.romaji}\n\n[Terjemahan]: ${currentOpt.id}\n\n[Poin Keunggulan]: ${currentOpt.points}`;
+
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast("📋 Jawaban lengkap disalin ke clipboard!");
+                } catch (err) {
+                    showToast("Gagal menyalin teks.");
+                }
+                document.body.removeChild(textArea);
+            });
+
+            // Bookmark / Save Answer
+            saveBtn.addEventListener("click", () => {
+                const currentOpt = generatedOptions[activeTabIndex];
+                if (!currentOpt) return;
+
+                const existingIndex = savedItems.findIndex(item => item.jp === currentOpt.jp);
+                if (existingIndex >= 0) {
+                    savedItems.splice(existingIndex, 1);
+                    showToast("Dihapus dari daftar favorit.");
+                } else {
+                    savedItems.push({
+                        qTitle: currentQuestionTitle.innerText,
+                        jp: currentOpt.jp,
+                        romaji: currentOpt.romaji,
+                        id: currentOpt.id,
+                        points: currentOpt.points,
+                        savedAt: new Date().toLocaleDateString('id-ID')
+                    });
+                    showToast("⭐ Jawaban disimpan ke favorit!");
+                }
+                localStorage.setItem("ssw_saved_answers", JSON.stringify(savedItems));
+                updateSavedBadge();
+                updateBookmarkIcon();
+            });
+
+            toggleSavedModalBtn.addEventListener("click", () => {
+                renderSavedItems();
+                savedModal.classList.remove("hidden");
+            });
+
+            closeSavedModalBtn.addEventListener("click", () => {
+                savedModal.classList.add("hidden");
+            });
+        }
+
+        function setActiveTab(index) {
+            activeTabIndex = index;
+            const tabButtons = optionTabs.querySelectorAll(".tab-btn");
+            
+            tabButtons.forEach((btn, i) => {
+                if (i === index) {
+                    btn.className = "tab-btn px-3.5 py-2.5 rounded-xl font-medium text-xs whitespace-nowrap flex-shrink-0 transition bg-rose-600 text-white shadow-md shadow-rose-600/20 active:scale-95 touch-manipulation";
+                } else {
+                    btn.className = "tab-btn px-3.5 py-2.5 rounded-xl font-medium text-xs whitespace-nowrap flex-shrink-0 transition bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 active:scale-95 touch-manipulation";
+                }
+            });
+
+            renderAnswerCard();
+        }
+
+        function renderAnswerCard() {
+            if (!generatedOptions || generatedOptions.length === 0) return;
+
+            const opt = generatedOptions[activeTabIndex] || generatedOptions[0];
+            optTag.innerText = opt.tag || "🌟 Standard";
+            jpText.innerText = opt.jp || "";
+            romajiText.innerText = opt.romaji || "";
+            idTranslation.innerText = opt.id || "";
+            pointNotes.innerText = opt.points || "";
+
+            updateBookmarkIcon();
+        }
+
+        function updateBookmarkIcon() {
+            const currentOpt = generatedOptions[activeTabIndex];
+            if (!currentOpt) return;
+
+            const isSaved = savedItems.some(item => item.jp === currentOpt.jp);
+            if (isSaved) {
+                bookmarkIcon.classList.add("text-rose-600", "fill-rose-600");
+            } else {
+                bookmarkIcon.classList.remove("text-rose-600", "fill-rose-600");
+            }
+        }
+
+        // Gemini API Call
+        async function fetchGeminiAnswers(questionText, sector, level, keywords) {
+            const apiKey = "AQ.Ab8RN6J2S5k-jJS_NVNX30Jh4SPoUMPYQ3soSrkUX2perD1lWQ"; // Canvas runtime handles auth
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const systemPrompt = `Anda adalah pakar pelatih wawancara kerja Jepang (Mensetsu Coach) khusus untuk kandidat visa Tokutei Ginou (SSW).
+Tugas Anda: Buat tepat 5 opsi jawaban wawancara dalam Bahasa Jepang untuk pertanyaan yang diberikan.
+Aturan Penting:
+1. JANGAN mencantumkan variabel nama atau tempat kosong seperti [Nama/〇〇]. Kalimat langsung mengalir natural tanpa perlu pengisian nama lagi.
+2. Buat jawaban Agak Panjang dan Lengkap (2 hingga 4 kalimat padat yang saling terhubung), mencakup: Latar belakang/Alasan + Poin Utama/Tindakan + Komitmen Kontribusi Kerja di Jepang.
+3. Level bahasa disesuaikan dengan ${level} (Dominan N4 sampai N3), bentuk sopan (Desu/Masu 丁寧語) yang alami, formal, dan profesional.
+4. Setiap opsi HARUS memiliki pendekatan yang berbeda:
+   - Opsi 1: "🌟 Standard & Polite" (Standard, sopan, dan terstruktur)
+   - Opsi 2: "💡 Berdasar Clue / Kata Kunci" (Sangat berfokus mengolah kata kunci/clue pengguna)
+   - Opsi 3: "🔥 Semangat & Motivasi Tinggi" (Antusiasme, keuletan, kemauan belajar tinggi)
+   - Opsi 4: "🤝 Orientasi Kerjasama/Tim" (Kerjasama tim, Hourensou, adaptasi)
+   - Opsi 5: "⚡ Terstruktur & Lengkap" (Lugas, profesional, berorientasi masa depan)
+5. Sertakan Romaji yang tepat dan Terjemahan Bahasa Indonesia yang akurat.
+6. Berikan 1-2 kalimat tips/penjelasan kenapa opsi ini bagus untuk wawancara SSW.`;
+
+            const userPrompt = `Detail Pertanyaan & Profil:
+- Pertanyaan Wawancara: "${questionText}"
+- Bidang Pekerjaan SSW: ${sector}
+- Kata Kunci / Clue Jawaban: ${keywords || "Tidak ada kata kunci khusus"}
+- Level Target: ${level}
+
+Hasilkan JSON array persis sesuai schema yang diminta.`;
+
+            const payload = {
+                contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "ARRAY",
+                        items: {
+                            type: "OBJECT",
+                            properties: {
+                                "tag": { "type": "STRING" },
+                                "jp": { "type": "STRING" },
+                                "romaji": { "type": "STRING" },
+                                "id": { "type": "STRING" },
+                                "points": { "type": "STRING" }
+                            },
+                            required: ["tag", "jp", "romaji", "id", "points"]
+                        }
+                    }
+                }
+            };
+
+            let delay = 1000;
+            for (let attempt = 0; attempt < 3; attempt++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.status === 429) {
+                        await new Promise(r => setTimeout(r, delay));
+                        delay *= 2;
+                        continue;
+                    }
+
+                    const result = await response.json();
+                    if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
+                        const jsonText = result.candidates[0].content.parts[0].text;
+                        return JSON.parse(jsonText);
+                    }
+                } catch (err) {
+                    console.warn(`Gemini API attempt ${attempt + 1} failed, retrying...`, err);
+                    await new Promise(r => setTimeout(r, delay));
+                    delay *= 2;
+                }
+            }
+            throw new Error("Gagal mendapatkan respon dari Gemini API.");
+        }
+
+        async function triggerGenerateProcess(onComplete) {
+            loadingOverlay.classList.remove("hidden");
+
+            const selectedPresetKey = questionPresetSelect.value;
+            const isCustom = selectedPresetKey === "custom";
+            const customQText = customQuestionInput.value.trim();
+
+            if (isCustom && !customQText) {
+                loadingOverlay.classList.add("hidden");
+                showToast("Harap isi teks pertanyaan custom terlebih dahulu!");
+                if (onComplete) onComplete();
+                return;
+            }
+
+            let questionText = "";
+            if (isCustom) {
+                questionText = customQText;
+                currentQuestionTitle.innerText = `Custom: "${customQText}"`;
+            } else {
+                const presetNames = {
+                    jikoshoukai: "Perkenalkan diri Anda / 自己紹介をしてください。",
+                    shibou_douki: "Apa alasan Anda melamar pekerjaan Tokutei Ginou ini? / 志望動機は何ですか。",
+                    why_japan: "Mengapa Anda ingin bekerja di Jepang? / なぜ日本で働きたいですか。",
+                    chousho_tansho: "Apa kelebihan dan kekurangan diri Anda? / 長所と短所を教えてください。",
+                    kenkou_kanri: "Bagaimana cara Anda menjaga kesehatan dan mengelola stres? / 健康管理はどうしていますか。",
+                    tough_work: "Apa yang Anda lakukan saat menghadapi pekerjaan berat/sulit? / 大変な仕事の時どうしますか。",
+                    future_goals: "Apa rencana/target Anda setelah 5 tahun di Jepang? / 将来の目標は何ですか。"
+                };
+                questionText = presetNames[selectedPresetKey] || PRESET_DATA[selectedPresetKey]?.title || "Wawancara SSW";
+                currentQuestionTitle.innerText = PRESET_DATA[selectedPresetKey]?.title || `Pertanyaan: ${selectedPresetKey}`;
+            }
+
+            const sector = sswSectorSelect.value.split(" / ")[0];
+            const level = jlptLevelSelect.value || "N4";
+            const keywords = userKeywordsInput.value || "";
+
+            try {
+                loadingText.innerText = `Sedang meracik 5 jawaban mendalam via Gemini AI...`;
+                const aiResults = await fetchGeminiAnswers(questionText, sector, level, keywords);
+                if (Array.isArray(aiResults) && aiResults.length === 5) {
+                    generatedOptions = aiResults;
+                } else {
+                    throw new Error("Format respon API tidak valid");
+                }
+            } catch (err) {
+                console.warn("Fallback to offline smart generator:", err);
+                loadingText.innerText = "Menggunakan generator jawaban cadangan...";
+                if (isCustom) {
+                    generatedOptions = generateCustomDynamicOptions(customQText);
+                } else {
+                    generatedOptions = generatePresetOptions(selectedPresetKey);
+                }
+            } finally {
+                loadingOverlay.classList.add("hidden");
+                setActiveTab(0);
+                showToast("✨ 5 Opsi jawaban lengkap berhasil di-generate!");
+                if (onComplete) onComplete();
+            }
+        }
+
+        function generatePresetOptions(key) {
+            const rawPreset = PRESET_DATA[key];
+            if (!rawPreset) return [];
+
+            const sector = sswSectorSelect.value.split(" / ")[0];
+            const bg = userKeywordsInput.value || "実務 (pengalaman/clue praktis)";
+
+            return rawPreset.options.map(opt => {
+                return {
+                    tag: opt.tag,
+                    jp: opt.jp.replace(/{SECTOR}/g, sector).replace(/{BG}/g, bg),
+                    romaji: opt.romaji.replace(/{SECTOR}/g, sector).replace(/{BG}/g, bg),
+                    id: opt.id.replace(/{SECTOR}/g, sector).replace(/{BG}/g, bg),
+                    points: opt.points
+                };
+            });
+        }
+
+        function generateCustomDynamicOptions(qText) {
+            const sector = sswSectorSelect.value.split(" / ")[0];
+            const bg = userKeywordsInput.value || "日頃の準備";
+
+            return [
+                {
+                    tag: "🌟 Standard & Polite",
+                    jp: `質問「${qText}」についてお答えいたします。私は常に自分の仕事に高い責任感を持ち、周りの方々と協力しながら丁寧に対応することを心がけております。${sector}の現場でも、指示をしっかり受けて一生懸命努力いたします。`,
+                    romaji: `Shitsumon '${qText}' ni tsuite okotae itashimasu. Watashi wa tsune ni jibun no shigoto ni takai sekiningan wo motte, mawari no katagata to kyouryoku shinagara teinei ni taiou suru koto wo kokorogakete orimasu. ${sector} no genba demo, shiji wo shikkari ukete isshoukenmei doryoku itashimasu.`,
+                    id: `Saya akan menjawab pertanyaan "${qText}". Saya selalu berusaha memiliki rasa tanggung jawab tinggi pada pekerjaan saya dan merespons dengan cermat sambil bekerja sama dengan orang-orang sekitar. Di lapangan ${sector} pun, saya akan menerima instruksi dengan baik dan berusaha sekuat tenaga.`,
+                    points: "Jawaban formal serbaguna 3 kalimat padat yang aman untuk pertanyaan custom."
+                },
+                {
+                    tag: "💡 Berdasar Clue / Kata Kunci",
+                    jp: `「${bg}」という考え方を大切にし、どんな困難な状況であっても落ち着いて対応することが重要だと認識しております。日本の${sector}の現場で、この強みを活かして会社に貢献できるよう努めます。`,
+                    romaji: `'${bg}' to iu kangaeka wo taisetsu ni shi, donna konnan na joukyou de atte mo ochitsuite taiou suru koto ga juuyou da to ninshiki shite orimasu. Nihon no ${sector} no genba de, kono tsuyomi wo ikashite kaisha ni kouken dekiru you tsutamemasu.`,
+                    id: `Saya mengutamakan pemikiran mengenai '${bg}', dan menyadari pentingnya merespons dengan tenang dalam situasi sulit apa pun. Di lapangan ${sector} di Jepang, saya akan berusaha memanfaatkan keunggulan ini untuk berkontribusi pada perusahaan.`,
+                    points: "Menggunakan kata kunci/clue yang dimasukkan sebagai landasan poin jawaban."
+                },
+                {
+                    tag: "🔥 Semangat & Motivasi Tinggi",
+                    jp: `その点については、とても重要かつ挑戦しがいのあることだと感じております！新しい知識や技術を吸収するために毎日努力し、チームの誰よりも前向きな姿勢で仕事に取り組んでまいります！`,
+                    romaji: `Sono ten ni tsuite wa, totemo juuyou katsu chousen shigai no aru koto da to kanjite orimasu! Atarashii chishiki ya gijutsu wo kyuushuu suru tame ni mainichi doryoku shi, chiimu no dare yori mo maemuki na shisei de shigoto ni torikunde mairimasu!`,
+                    id: `Mengenai hal tersebut, saya merasa itu adalah hal yang sangat penting dan patut ditantang! Saya akan berusaha setiap hari menyerap ilmu dan keterampilan baru, serta mengerjakan tugas dengan sikap paling positif dibanding siapapun di tim!`,
+                    points: "Sangat baik untuk memperlihatkan energi positif dan kesiapan belajar."
+                },
+                {
+                    tag: "🤝 Orientasi Kerjasama/Tim",
+                    jp: `一人だけで悩みを抱え込まず、先輩や同僚と積極的にコミュニケーションを取ることが解決への近道だと考えております。報連相を徹底し、チーム全体の作業がスムーズに進むようサポートいたします。`,
+                    romaji: `Hitori dake de nayami wo kakaekomazu, senpai ya douryou to sekkyokuteki ni komyunikeeshon wo toru koto ga kaiketsu e no chikamichi da to kangaete orimasu. Hourensou wo tettei shi, chiimu zentai no sagyou ga sumuuzu ni susumu you sapooto itashimasu.`,
+                    id: `Saya beranggapan tidak memendam masalah sendiri melainkan aktif berkomunikasi dengan atasan dan rekan kerja adalah jalan tercepat menuju solusi. Saya akan menerapkan HORENSO dengan ketat dan mendukung agar pekerjaan seluruh tim berjalan lancar.`,
+                    points: "Mengedepankan komunikasi tempat kerja khas Jepang (Hourensou)."
+                },
+                {
+                    tag: "⚡ Terstruktur & Lengkap",
+                    jp: `はい、真面目にルールとマナーを遵守し、会社とお客様の期待に応えられるよう精一杯業務に邁進いたします。長期的視点を持って信頼される人材になれるよう努力してまいります。`,
+                    romaji: `Hai, majime ni ruuru to manaa wo junshu shi, kaisha to okyakusama no kitai ni kotaereru you seippai gyoumu ni maishin itashimasu. Choukiteki shiten wo motte shinrai sareru jinzai ni nareru you doryoku shite mairimasu.`,
+                    id: `Ya, saya akan mematuhi aturan dan etika dengan tekun, serta berupaya sekuat tenaga menjalankan tugas demi memenuhi ekspektasi perusahaan dan pelanggan. Saya akan berusaha menjadi SDM yang dipercaya dengan pandangan jangka panjang.`,
+                    points: "Kalimat penutup tegas dan matang."
+                }
+            ];
+        }
+
+        function renderSavedItems() {
+            if (savedItems.length === 0) {
+                savedList.innerHTML = `
+                    <div class="text-center py-8 text-slate-400">
+                        <i data-lucide="bookmark" class="w-10 h-10 mx-auto mb-2 opacity-40"></i>
+                        <p class="text-xs">Belum ada jawaban favorit yang disimpan.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            savedList.innerHTML = savedItems.map((item, idx) => `
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 relative group space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-rose-600">${item.qTitle}</span>
+                        <span class="text-[10px] text-slate-400">${item.savedAt}</span>
+                    </div>
+                    <div class="text-sm font-semibold text-slate-800 japanese-text">${item.jp}</div>
+                    <div class="text-xs text-slate-600 italic">${item.romaji}</div>
+                    <div class="text-xs text-slate-700 bg-white p-2 rounded border border-slate-100">${item.id}</div>
+                    
+                    <div class="flex justify-end pt-1">
+                        <button onclick="removeSavedItem(${idx})" class="text-xs text-rose-500 hover:text-rose-700 flex items-center gap-1 font-medium">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Hapus
+                        </button>
+                    </div>
+                </div>
+            `).join("");
+
+            lucide.createIcons();
+        }
+
+        window.removeSavedItem = function(index) {
+            savedItems.splice(index, 1);
+            localStorage.setItem("ssw_saved_answers", JSON.stringify(savedItems));
+            updateSavedBadge();
+            renderSavedItems();
+            updateBookmarkIcon();
+            showToast("Item dihapus dari favorit.");
+        };
+
+        function updateSavedBadge() {
+            savedCountSpan.innerText = savedItems.length;
+        }
+
+        function showToast(msg) {
+            toastMsg.innerText = msg;
+            toast.classList.remove("opacity-0", "pointer-events-none", "translate-y-2");
+            toast.classList.add("opacity-100", "translate-y-0");
+
+            setTimeout(() => {
+                toast.classList.remove("opacity-100", "translate-y-0");
+                toast.classList.add("opacity-0", "pointer-events-none", "translate-y-2");
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
